@@ -296,7 +296,7 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm max-w-2xl mx-auto space-y-6">
                     <div>
                         <h3 class="text-base font-bold text-slate-800 mb-1">Sinkronisasi Database Google Sheets & Upload Excel</h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">Anda dapat menarik data langsung dari Google Sheets atau mengunggah file Excel (.xlsx / .csv) baru untuk memperbarui database secara instan dan otomatis tersinkronisasi ke cloud.</p>
+                        <p class="text-xs text-slate-400 leading-relaxed">Tarik data langsung dari Google Sheets atau unggah file Excel (.xlsx / .csv). Sistem otomatis menyaring data ganda dengan pengaman tingkat tinggi.</p>
                         
                         <!-- Tombol Sync Google Sheets -->
                         <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 flex items-center justify-between">
@@ -312,7 +312,7 @@
                             <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                             <button onclick="handleExcelUpload()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs whitespace-nowrap"><i class="fa-solid fa-upload mr-1.5"></i> Proses Upload</button>
                         </div>
-                        <p class="text-[11px] text-slate-400">Pastikan kolom file excel sesuai dengan format kolom Master Data (Customer, Invoice Number, City Homepass, dll).</p>
+                        <p class="text-[11px] text-slate-400">Data baru akan ditambahkan, sementara data yang sudah ada (berdasarkan kombinasi No Invoice & Nama Customer) akan diperbarui otomatis tanpa duplikasi ganda.</p>
                     </div>
 
                     <div class="flex justify-between items-center pt-2 border-t border-slate-100">
@@ -467,7 +467,59 @@
             }
         }
 
-        // Ambil Data Online via Google Apps Script Web App
+        // ==========================================
+        // SISTEM KEAMANAN ANTI-DUPLIKASI KUAT (ROBUST)
+        // ==========================================
+        function mergeUniqueCustomers(newIncomingData) {
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            newIncomingData.forEach(row => {
+                // Ambil dan bersihkan data teks untuk mencegah duplikasi karena perbedaan spasi atau huruf kapital
+                const cleanName = formatText(row['Customer'] || row['customer'] || row['Nama'] || '');
+                const cleanInvoice = formatText(row['Invoice Number'] || row['invoiceNo'] || row['Invoice'] || '');
+                
+                if (!cleanName && !cleanInvoice) return; // Lewatkan baris kosong
+
+                // Pengecekan Kunci Komposit Unik (Kombinasi Invoice + Nama Customer)
+                const existingIndex = customers.findIndex(c => 
+                    formatText(c.invoiceNo) === cleanInvoice && formatText(c.customer) === cleanName
+                );
+
+                const mappedData = {
+                    id: existingIndex !== -1 ? customers[existingIndex].id : (Date.now() + Math.floor(Math.random() * 10000)),
+                    customer: cleanName || 'Tanpa Nama',
+                    saMonth: formatText(row['SA Month'] || row['saMonth'] || '2026-01'),
+                    cityHome: formatText(row['City Homepass'] || row['cityHome'] || '-'),
+                    citySales: formatText(row['City Sales'] || row['citySales'] || '-'),
+                    salesCode: formatText(row['Sales Code'] || row['salesCode'] || '-'),
+                    salesName: formatText(row['Sales Name'] || row['salesName'] || '-'),
+                    microBloc: formatText(row['Micro Block ID'] || row['microBloc'] || '-'),
+                    spvZone: formatText(row['SPV Zone'] || row['spvZone'] || '-'),
+                    spvName: formatText(row['SPV Name'] || row['spvName'] || '-'),
+                    region: formatText(row['Region'] || row['region'] || 'General'),
+                    acqChan: formatText(row['Acq Channel'] || row['acqChan'] || '-'),
+                    billingCyc: formatText(row['Billing Cycle'] || row['billingCyc'] || 'Monthly'),
+                    invoiceNo: cleanInvoice || 'INV/UNKNOWN',
+                    // Pertahankan status pembayaran lokal jika customer sudah ada, kecuali ditentukan lain
+                    paymentStatus: formatText(row['Payment Status'] || row['paymentStatus'] || (existingIndex !== -1 ? customers[existingIndex].paymentStatus : 'Unpaid'))
+                };
+
+                if (existingIndex !== -1) {
+                    // JIKA DATA SUDAH ADA: Lakukan UPDATE data saja tanpa merekam data baru (anti-duplikat ganda)
+                    customers[existingIndex] = { ...customers[existingIndex], ...mappedData };
+                    updatedCount++;
+                } else {
+                    // JIKA DATA BELUM ADA: Rekam sebagai data baru
+                    customers.push(mappedData);
+                    addedCount++;
+                }
+            });
+
+            return { addedCount, updatedCount };
+        }
+
+        // Ambil Data Online via Google Apps Script Web App dengan Proteksi Duplikat
         async function fetchGoogleSheetData() {
             try {
                 const response = await fetch(WEB_APP_URL);
@@ -479,26 +531,9 @@
                     return;
                 }
 
-                customers = json.map((row, index) => ({
-                    id: Date.now() + index,
-                    customer: formatText(row['Customer'] || row['customer'] || 'Customer ' + (index + 1)),
-                    saMonth: formatText(row['SA Month'] || '2026-01'),
-                    cityHome: formatText(row['City Homepass'] || row['cityHome'] || '-'),
-                    citySales: formatText(row['City Sales'] || '-'),
-                    salesCode: formatText(row['Sales Code'] || '-'),
-                    salesName: formatText(row['Sales Name'] || row['salesName'] || '-'),
-                    microBloc: formatText(row['Micro Block ID'] || '-'),
-                    spvZone: formatText(row['SPV Zone'] || '-'),
-                    spvName: formatText(row['SPV Name'] || row['spvName'] || '-'),
-                    region: formatText(row['Region'] || 'General'),
-                    acqChan: formatText(row['Acq Channel'] || '-'),
-                    billingCyc: formatText(row['Billing Cycle'] || 'Monthly'),
-                    invoiceNo: formatText(row['Invoice Number'] || row['invoiceNo'] || ('INV/' + (2026000 + index))),
-                    paymentStatus: formatText(row['Payment Status'] || row['paymentStatus'] || 'Unpaid')
-                }));
-
+                const result = mergeUniqueCustomers(json);
                 saveDataLocally();
-                alert(`Berhasil sinkronisasi ${customers.length} data dari Google Sheets!`);
+                alert(`Sinkronisasi Berhasil!\n- Data Baru Ditambahkan: ${result.addedCount}\n- Data Diperbarui (Pencegah Duplikat Aktif): ${result.updatedCount}`);
                 switchTab('dashboard');
             } catch (err) {
                 console.error(err);
@@ -509,7 +544,7 @@
             }
         }
 
-        // Fitur Upload Excel dan Update DB secara Lokal & Online
+        // Fitur Upload Excel dengan Filter Anti-Duplikasi Kuat
         function handleExcelUpload() {
             const fileInput = document.getElementById('excel-file-input');
             if (fileInput.files.length === 0) {
@@ -533,30 +568,13 @@
                         return;
                     }
 
-                    customers = jsonRows.map((row, index) => ({
-                        id: Date.now() + index,
-                        customer: formatText(row['Customer'] || row['customer'] || 'Customer ' + (index + 1)),
-                        saMonth: formatText(row['SA Month'] || row['saMonth'] || '2026-01'),
-                        cityHome: formatText(row['City Homepass'] || row['cityHome'] || '-'),
-                        citySales: formatText(row['City Sales'] || row['citySales'] || '-'),
-                        salesCode: formatText(row['Sales Code'] || row['salesCode'] || '-'),
-                        salesName: formatText(row['Sales Name'] || row['salesName'] || '-'),
-                        microBloc: formatText(row['Micro Block ID'] || row['microBloc'] || '-'),
-                        spvZone: formatText(row['SPV Zone'] || row['spvZone'] || '-'),
-                        spvName: formatText(row['SPV Name'] || row['spvName'] || '-'),
-                        region: formatText(row['Region'] || row['region'] || 'General'),
-                        acqChan: formatText(row['Acq Channel'] || row['acqChan'] || '-'),
-                        billingCyc: formatText(row['Billing Cycle'] || row['billingCyc'] || 'Monthly'),
-                        invoiceNo: formatText(row['Invoice Number'] || row['invoiceNo'] || ('INV/' + (2026000 + index))),
-                        paymentStatus: formatText(row['Payment Status'] || row['paymentStatus'] || 'Unpaid')
-                    }));
-
+                    const result = mergeUniqueCustomers(jsonRows);
                     saveDataLocally();
-                    alert(`Berhasil mengunggah dan memperbarui ${customers.length} data customer dari Excel! Database tersinkronisasi.`);
+                    alert(`Upload Excel Berhasil!\n- Data Baru Masuk: ${result.addedCount}\n- Data Diperbarui (Pencegah Duplikat Aktif): ${result.updatedCount}`);
                     switchTab('dashboard');
                 } catch (err) {
                     console.error(err);
-                    alert('Gagal membaca file Excel. Pastikan formatnya benar.');
+                    alert('Gagal membaca file Excel. Pastikan format kolom benar.');
                 }
             };
             reader.readAsArrayBuffer(file);
