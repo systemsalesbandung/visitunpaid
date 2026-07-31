@@ -25,7 +25,7 @@
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-600">
 
-    <!-- HALAMAN LOGIN (INFO AKUN DI-HIDDEN / DIHAPUS DARI TAMPILAN) -->
+    <!-- HALAMAN LOGIN -->
     <div id="login-section" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 space-y-6">
             <div class="text-center space-y-2">
@@ -44,7 +44,6 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
                     <div class="relative">
-                        <!-- Password input dengan fitur hide/show -->
                         <input type="password" id="login-pass" required placeholder="Masukkan password..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-none focus:border-emerald-500 pr-10">
                         <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
                             <i id="eye-icon" class="fa-solid fa-eye-slash text-xs"></i>
@@ -57,7 +56,7 @@
         </div>
     </div>
 
-    <!-- APLIKASI UTAMA (DISEMBUNYIKAN SEBELUM LOGIN) -->
+    <!-- APLIKASI UTAMA -->
     <div id="app-container" class="flex flex-col h-screen overflow-hidden hidden">
         <!-- Top Navigation Menu -->
         <header class="bg-slate-900 text-slate-300 shadow-lg z-20 border-b border-slate-800">
@@ -70,22 +69,29 @@
                 </div>
 
                 <nav class="hidden md:flex items-center space-x-1">
-                    <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-emerald-600 text-white shadow-md shadow-emerald-900/40 transition-smooth">
+                    <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-emerald-600 text-white shadow-md shadow-emerald-900/40 transition-smooth">
                         <i class="fa-solid fa-house-chimney"></i> Dashboard
                     </a>
-                    <a href="#" onclick="switchTab('unpaid')" id="nav-unpaid" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
-                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Customer Unpaid
+                    <a href="#" onclick="switchTab('paid')" id="nav-paid" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> Paid
+                        <span id="badge-paid" class="bg-emerald-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                    </a>
+                    <a href="#" onclick="switchTab('unpaid')" id="nav-unpaid" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Unpaid
                         <span id="badge-unpaid" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
                     </a>
-                    <a href="#" onclick="switchTab('visit')" id="nav-visit" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
-                        <i class="fa-solid fa-location-crosshairs text-blue-400"></i> Proses Visit & Log
+                    <a href="#" onclick="switchTab('visit')" id="nav-visit" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                        <i class="fa-solid fa-location-crosshairs text-blue-400"></i> Visit Log
                     </a>
                     <!-- Menu Khusus Admin -->
-                    <a href="#" onclick="switchTab('customers')" id="nav-customers" class="admin-only flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                    <a href="#" onclick="switchTab('customers')" id="nav-customers" class="admin-only flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
                         <i class="fa-solid fa-users text-purple-400"></i> Master Data
                     </a>
-                    <a href="#" onclick="switchTab('upload')" id="nav-upload" class="admin-only flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
-                        <i class="fa-solid fa-file-excel text-emerald-400"></i> Upload & Sync
+                    <a href="#" onclick="switchTab('upload')" id="nav-upload" class="admin-only flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i> Sync
+                    </a>
+                    <a href="#" onclick="switchTab('password')" id="nav-password" class="admin-only flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                        <i class="fa-solid fa-key text-yellow-400"></i> Sandi
                     </a>
                 </nav>
 
@@ -102,10 +108,12 @@
             </div>
             <div class="md:hidden flex overflow-x-auto p-2 bg-slate-950 space-x-1 border-t border-slate-800">
                 <a href="#" onclick="switchTab('dashboard')" id="nav-m-dashboard" class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white whitespace-nowrap">Dashboard</a>
+                <a href="#" onclick="switchTab('paid')" id="nav-m-paid" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Paid</a>
                 <a href="#" onclick="switchTab('unpaid')" id="nav-m-unpaid" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Unpaid</a>
                 <a href="#" onclick="switchTab('visit')" id="nav-m-visit" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Visit Log</a>
                 <a href="#" onclick="switchTab('customers')" id="nav-m-customers" class="admin-only px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Master</a>
                 <a href="#" onclick="switchTab('upload')" id="nav-m-upload" class="admin-only px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Sync</a>
+                <a href="#" onclick="switchTab('password')" id="nav-m-password" class="admin-only px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Sandi</a>
             </div>
         </header>
 
@@ -127,7 +135,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group cursor-pointer" onclick="switchTab('paid')">
                             <div class="flex items-center justify-between relative z-10">
                                 <div>
                                     <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status Paid</p>
@@ -138,7 +146,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group cursor-pointer" onclick="switchTab('unpaid')">
                             <div class="flex items-center justify-between relative z-10">
                                 <div>
                                     <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status Unpaid</p>
@@ -221,6 +229,38 @@
                     </div>
                 </div>
 
+                <!-- TAB: CUSTOMER PAID (DENGAN DETAIL FOTO VISIT) -->
+                <div id="tab-paid" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Daftar Customer Sudah Melakukan Pembayaran (Paid)</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Detail lengkap informasi customer, sales, supervisor, serta bukti kunjungan pelunasan.</p>
+                        </div>
+                        <div class="flex items-center gap-3 w-full md:w-auto">
+                            <input type="text" id="search-paid" placeholder="Cari customer / invoice / sales..." onkeyup="renderPaidTable()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs w-full md:w-64 bg-slate-50/50">
+                            <button onclick="exportPaidCSV()" class="admin-only px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-download"></i> Export Excel</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-600 whitespace-nowrap">
+                                <thead class="bg-slate-100/70 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-5 py-3">Customer Name</th>
+                                        <th class="px-5 py-3">Invoice No</th>
+                                        <th class="px-5 py-3">City Homepass</th>
+                                        <th class="px-5 py-3">Sales Name</th>
+                                        <th class="px-5 py-3">SPV Name</th>
+                                        <th class="px-5 py-3">Payment Status</th>
+                                        <th class="px-5 py-3 text-center">Aksi Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paid-tbody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- TAB 2: CUSTOMER UNPAID -->
                 <div id="tab-unpaid" class="tab-content space-y-6 hidden">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
@@ -230,7 +270,6 @@
                         </div>
                         <div class="flex items-center gap-3 w-full md:w-auto">
                             <input type="text" id="search-unpaid" placeholder="Cari customer / invoice..." onkeyup="renderUnpaidTable()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs w-full md:w-64 bg-slate-50/50">
-                            <!-- Tombol Export Excel khusus Admin -->
                             <button onclick="exportUnpaidCSV()" class="admin-only px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-download"></i> Export Excel</button>
                         </div>
                     </div>
@@ -287,12 +326,11 @@
                 <div id="tab-customers" class="tab-content space-y-6 hidden">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Seluruh Master Data Customer (Google Sheets Connected)</h3>
+                            <h3 class="text-base font-bold text-slate-800">Seluruh Master Data Customer</h3>
                             <p class="text-xs text-slate-400 mt-0.5">Daftar lengkap seluruh data customer dari Google Spreadsheet.</p>
                         </div>
                         <div class="flex items-center gap-3 w-full md:w-auto">
                             <input type="text" id="search-master" placeholder="Cari customer / city / sales..." onkeyup="handleMasterSearch()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs w-full md:w-64 bg-slate-50/50">
-                            <!-- Tombol Download Master Excel khusus Admin -->
                             <button onclick="exportMasterCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-download"></i> Download Excel</button>
                         </div>
                     </div>
@@ -332,28 +370,25 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: UPLOAD EXCEL & GOOGLE SHEETS SYNC (KHUSUS ADMIN) -->
+                <!-- TAB 5: UPLOAD EXCEL & SYNC (KHUSUS ADMIN) -->
                 <div id="tab-upload" class="tab-content space-y-6 hidden">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm max-w-2xl mx-auto space-y-6">
                         <div>
                             <h3 class="text-base font-bold text-slate-800 mb-1">Sinkronisasi Google Sheets & Upload Excel</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Anda dapat menarik data langsung dari Google Spreadsheet atau mengunggah file Excel (.xlsx / .csv) baru untuk memperbarui database. Sistem otomatis memfilter data duplikat.</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">Tarik data langsung dari Google Spreadsheet atau unggah file Excel (.xlsx / .csv) baru.</p>
                             
-                            <!-- Tombol Sync Apps Script -->
                             <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 flex items-center justify-between">
                                 <span class="truncate font-medium">🔗 Tarik Data dari Google Spreadsheet Cloud</span>
                                 <button onclick="fetchGoogleSheetData()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm whitespace-nowrap ml-2"><i class="fa-solid fa-rotate mr-1"></i> Sync Sekarang</button>
                             </div>
                         </div>
 
-                        <!-- Form Upload File Excel -->
                         <div class="border-t border-slate-100 pt-5 space-y-3">
                             <label class="block text-xs font-bold text-slate-700">Upload File Excel / CSV Master Data Baru</label>
                             <div class="flex items-center gap-3">
                                 <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                                 <button onclick="handleExcelUpload()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs whitespace-nowrap"><i class="fa-solid fa-upload mr-1.5"></i> Proses Upload</button>
                             </div>
-                            <p class="text-[11px] text-slate-400">Pastikan kolom file excel sesuai dengan format kolom Master Data.</p>
                         </div>
 
                         <div class="flex justify-between items-center pt-2 border-t border-slate-100">
@@ -361,7 +396,51 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- TAB 6: GANTI PASSWORD (KHUSUS ADMIN) -->
+                <div id="tab-password" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm max-w-xl mx-auto space-y-6">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-1">Pengaturan & Perubahan Password Akun</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">Admin dapat mengubah password akun login untuk role Admin maupun User sesuai keinginan.</p>
+                        </div>
+
+                        <form onsubmit="handleUpdatePassword(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Akun yang Akan Diubah</label>
+                                <select id="target-role" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-none focus:border-emerald-500">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Password Baru</label>
+                                <input type="password" id="new-password" required placeholder="Masukkan password baru..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg transition-smooth">Simpan Password Baru</button>
+                        </form>
+                    </div>
+                </div>
+
             </main>
+        </div>
+    </div>
+
+    <!-- MODAL PAID DETAIL (DIPERBARUI DENGAN FOTO VISIT) -->
+    <div id="paid-detail-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i> Detail Informasi Pelunasan & Bukti Visit (Paid)
+                </h3>
+                <button onclick="closePaidDetailModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            
+            <div id="paid-detail-content" class="space-y-4 text-xs text-slate-600"></div>
+
+            <div class="flex justify-end pt-3 border-t border-slate-100">
+                <button onclick="closePaidDetailModal()" class="px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-slate-900">Tutup</button>
+            </div>
         </div>
     </div>
 
@@ -375,7 +454,7 @@
             <form id="form-visit" onsubmit="submitVisit(event)" class="space-y-3.5">
                 <input type="hidden" id="visit-customer-id">
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pilih / Nama Customer</label>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nama Customer</label>
                     <select id="modal-cust-select" onchange="onSelectCustomerModal(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50"><option value="">-- Pilih Customer --</option></select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -394,7 +473,7 @@
                     </div>
                 </div>
                 <div><label class="block text-[11px] font-semibold text-slate-600 mb-1">Remark / Keterangan</label><textarea id="modal-remark" rows="2" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50"></textarea></div>
-                <div><label class="block text-[11px] font-semibold text-slate-600 mb-1">Lampiran Foto (Bisa pilih banyak foto)</label><input type="file" id="modal-photos" accept="image/*" multiple class="w-full text-xs text-slate-500"></div>
+                <div><label class="block text-[11px] font-semibold text-slate-600 mb-1">Lampiran Foto</label><input type="file" id="modal-photos" accept="image/*" multiple class="w-full text-xs text-slate-500"></div>
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
                     <button type="button" onclick="closeVisitModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs">Batal</button>
                     <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Simpan Kunjungan</button>
@@ -455,17 +534,33 @@
 
     <!-- JAVASCRIPT CORE SCRIPT -->
     <script>
-        const SHEETDB_URL = 'https://script.google.com/macros/s/AKfycbztUTRUueRONR1trPSmVmaej4wF1PWegGyTM4F_sj-qlES7V9nzyaYbTcP8px7FYIkm/exec';
+        // URL Web App Google Apps Script telah diperbarui secara otomatis
+        const SHEETDB_URL = 'https://script.google.com/macros/s/AKfycbxZvjqSQaCRDZPzXmhC5IzJSmV7tHUHl5lxN4M3GmDkKTZ4DzTpEla5jxN5-aZ3kKug/exec';
 
         let customers = JSON.parse(localStorage.getItem('col_customers')) || [];
         let visits = JSON.parse(localStorage.getItem('col_visits')) || [];
         let currentUserRole = localStorage.getItem('col_current_role') || null;
+        
+        let appCredentials = JSON.parse(localStorage.getItem('col_credentials')) || {
+            admin: 'bandung123',
+            user: 'supervisor123'
+        };
+
+        if (!localStorage.getItem('col_credentials')) {
+            localStorage.setItem('col_credentials', JSON.stringify(appCredentials));
+        }
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'col_credentials') {
+                appCredentials = JSON.parse(e.newValue) || { admin: 'bandung123', user: 'supervisor123' };
+            }
+        });
+
         let chartPaymentInstance = null;
         let chartCityHomeInstance = null;
         let currentMasterPage = 1;
         const rowsPerPage = 20;
 
-        // Cek Sesi Login saat halaman dimuat
         window.onload = function() {
             if (currentUserRole) {
                 document.getElementById('login-section').classList.add('hidden');
@@ -475,7 +570,6 @@
             }
         };
 
-        // Fungsi Toggle Password Hide / Show
         function togglePasswordVisibility() {
             const passInput = document.getElementById('login-pass');
             const eyeIcon = document.getElementById('eye-icon');
@@ -488,16 +582,17 @@
             }
         }
 
-        // Fungsi Proses Login
         function handleLogin(event) {
             event.preventDefault();
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value;
             const errDiv = document.getElementById('login-error');
 
-            if (u === 'user' && p === 'user123') {
+            const latestCredentials = JSON.parse(localStorage.getItem('col_credentials')) || appCredentials;
+
+            if (u === 'user' && p === latestCredentials.user) {
                 currentUserRole = 'user';
-            } else if (u === 'admin' && p === 'admin123') {
+            } else if (u === 'admin' && p === latestCredentials.admin) {
                 currentUserRole = 'admin';
             } else {
                 errDiv.classList.remove('hidden');
@@ -513,7 +608,6 @@
             initApp();
         }
 
-        // Fungsi Logout
         function handleLogout() {
             localStorage.removeItem('col_current_role');
             currentUserRole = null;
@@ -523,7 +617,28 @@
             document.getElementById('login-section').classList.remove('hidden');
         }
 
-        // Pembatasan Akses Berdasarkan Role
+        function handleUpdatePassword(event) {
+            event.preventDefault();
+            if (currentUserRole !== 'admin') {
+                alert('Akses ditolak! Fitur ini khusus untuk admin.');
+                return;
+            }
+
+            const targetRole = document.getElementById('target-role').value;
+            const newPass = document.getElementById('new-password').value;
+
+            if (!newPass || newPass.length < 4) {
+                alert('Password baru minimal harus 4 karakter.');
+                return;
+            }
+
+            appCredentials[targetRole] = newPass;
+            localStorage.setItem('col_credentials', JSON.stringify(appCredentials));
+
+            alert(`Password untuk akun "${targetRole}" berhasil diperbarui dan disinkronkan ke seluruh perangkat!`);
+            document.getElementById('new-password').value = '';
+        }
+
         function applyRoleAccess() {
             const badge = document.getElementById('user-role-badge');
             badge.innerText = currentUserRole;
@@ -531,9 +646,8 @@
             const adminElements = document.querySelectorAll('.admin-only');
             if (currentUserRole === 'user') {
                 adminElements.forEach(el => el.classList.add('hidden'));
-                // Jika user sedang di tab terlarang, pindahkan ke dashboard
                 const activeTab = document.querySelector('.tab-content:not(.hidden)').id;
-                if (activeTab === 'tab-customers' || activeTab === 'tab-upload') {
+                if (['tab-customers', 'tab-upload', 'tab-password'].includes(activeTab)) {
                     switchTab('dashboard');
                 }
             } else {
@@ -553,8 +667,7 @@
         }, 1000);
 
         function switchTab(tabId) {
-            // Blokir akses manual via script jika user biasa mencoba buka menu admin
-            if (currentUserRole === 'user' && (tabId === 'customers' || tabId === 'upload')) {
+            if (currentUserRole === 'user' && ['customers', 'upload', 'password'].includes(tabId)) {
                 alert('Akses ditolak! Menu ini khusus untuk Admin.');
                 return;
             }
@@ -575,7 +688,7 @@
                 activeNav.classList.remove('hover:bg-slate-800', 'hover:text-white');
             }
 
-            ['dashboard', 'unpaid', 'visit', 'customers', 'upload'].forEach(id => {
+            ['dashboard', 'paid', 'unpaid', 'visit', 'customers', 'upload', 'password'].forEach(id => {
                 const mEl = document.getElementById('nav-m-' + id);
                 if(mEl) {
                     mEl.className = id === tabId ? 'px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white whitespace-nowrap' : 'px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap';
@@ -583,6 +696,7 @@
             });
 
             if (tabId === 'dashboard') updateDashboard();
+            else if (tabId === 'paid') renderPaidTable();
             else if (tabId === 'unpaid') renderUnpaidTable();
             else if (tabId === 'visit') renderVisitTable();
             else if (tabId === 'customers') renderMasterTable();
@@ -593,6 +707,7 @@
                 await fetchGoogleSheetData();
             } else {
                 updateDashboard();
+                renderPaidTable();
                 renderUnpaidTable();
                 renderVisitTable();
                 if (currentUserRole === 'admin') renderMasterTable();
@@ -602,13 +717,9 @@
         async function fetchGoogleSheetData() {
             try {
                 const response = await fetch(SHEETDB_URL);
-                if (!response.ok) throw new Error('Gagal mengambil data dari Google Apps Script.');
+                if (!response.ok) throw new Error('Gagal mengambil data.');
                 const json = await response.json();
-
                 if (json.length === 0) return;
-
-                let newCount = 0;
-                let duplicateCount = 0;
 
                 json.forEach((row, index) => {
                     const invNo = formatText(row['Invoice Number'] || row['invoiceNo'] || ('INV/' + (2026000 + index)));
@@ -632,20 +743,19 @@
                             invoiceNo: invNo,
                             paymentStatus: formatText(row['Payment Status'] || row['paymentStatus'] || 'Unpaid')
                         });
-                        newCount++;
-                    } else {
-                        duplicateCount++;
                     }
                 });
 
                 saveDataLocally();
                 updateDashboard();
+                renderPaidTable();
                 renderUnpaidTable();
                 renderVisitTable();
                 if(currentUserRole === 'admin') renderMasterTable();
             } catch (err) {
                 console.error(err);
                 updateDashboard();
+                renderPaidTable();
                 renderUnpaidTable();
                 renderVisitTable();
                 if(currentUserRole === 'admin') renderMasterTable();
@@ -669,8 +779,8 @@
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet);
 
                     if (jsonRows.length === 0) return;
-
                     let newCount = 0;
+
                     jsonRows.forEach((row, index) => {
                         const invNo = formatText(row['Invoice Number'] || row['invoiceNo'] || ('INV/' + (2026000 + index)));
                         const isExist = customers.some(c => String(c.invoiceNo).toLowerCase() === String(invNo).toLowerCase());
@@ -720,7 +830,7 @@
                         customer: updatedCustomer.customer
                     })
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error('Gagal sinkronisasi cloud:', err); }
         }
 
         async function deleteFromGoogleSheetOnline(invoiceNo) {
@@ -731,14 +841,16 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: "delete", invoiceNo: invoiceNo })
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error('Gagal menghapus dari cloud:', err); }
         }
 
         function saveDataLocally(specificCustomer = null) {
             localStorage.setItem('col_customers', JSON.stringify(customers));
             localStorage.setItem('col_visits', JSON.stringify(visits));
             updateDashboard();
-            if (specificCustomer) syncToGoogleSheetOnline(specificCustomer);
+            if (specificCustomer) {
+                syncToGoogleSheetOnline(specificCustomer);
+            }
         }
 
         function updateDashboard() {
@@ -751,6 +863,7 @@
             document.getElementById('stat-paid').innerText = paid;
             document.getElementById('stat-unpaid').innerText = unpaid;
             document.getElementById('stat-visits').innerText = totalVisits;
+            document.getElementById('badge-paid').innerText = paid;
             document.getElementById('badge-unpaid').innerText = unpaid;
 
             const tbody = document.getElementById('dashboard-unpaid-tbody');
@@ -798,6 +911,113 @@
                 data: { labels: Object.keys(cityCounts), datasets: [{ data: Object.values(cityCounts), backgroundColor: '#4f46e5', borderRadius: 6 }] },
                 options: { indexAxis: cityOrientation === 'horizontal' ? 'y' : 'x', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
+        }
+
+        function renderPaidTable() {
+            const query = (document.getElementById('search-paid')?.value || '').toLowerCase();
+            const tbody = document.getElementById('paid-tbody');
+            const paidList = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'paid' && (String(c.customer).toLowerCase().includes(query) || String(c.invoiceNo).toLowerCase().includes(query) || String(c.salesName).toLowerCase().includes(query)));
+            
+            tbody.innerHTML = paidList.length === 0 ? `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">Tidak ditemukan customer yang sudah paid.</td></tr>` :
+                paidList.map(c => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-5 py-3 font-semibold text-slate-800">${c.customer}</td>
+                        <td class="px-5 py-3 text-indigo-600 font-medium">${c.invoiceNo || '-'}</td>
+                        <td class="px-5 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold">${c.cityHome || '-'}</span></td>
+                        <td class="px-5 py-3 text-slate-600">${c.salesName || '-'}</td>
+                        <td class="px-5 py-3 text-slate-600">${c.spvName || '-'}</td>
+                        <td class="px-5 py-3"><span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-bold">Paid</span></td>
+                        <td class="px-5 py-3 text-center">
+                            <button onclick="openPaidDetail(${c.id})" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-semibold flex items-center gap-1.5 mx-auto"><i class="fa-solid fa-eye"></i> Detail</button>
+                        </td>
+                    </tr>
+                `).join('');
+        }
+
+        function openPaidDetail(custId) {
+            const c = customers.find(item => item.id === custId);
+            if (!c) return;
+
+            const relatedVisit = visits.find(v => 
+                (c.invoiceNo && v.invoice && String(v.invoice).toLowerCase() === String(c.invoiceNo).toLowerCase()) ||
+                String(v.customer).toLowerCase() === String(c.customer).toLowerCase()
+            );
+
+            let photosHtml = '<span class="text-slate-400 italic">Tidak ada lampiran foto kunjungan</span>';
+            let visitInfoHtml = '<span class="text-slate-400 italic">Belum ada catatan visit lapangan</span>';
+
+            if (relatedVisit) {
+                if (relatedVisit.photos && relatedVisit.photos.length > 0) {
+                    photosHtml = relatedVisit.photos.map(p => `
+                        <a href="${p}" target="_blank">
+                            <img src="${p}" class="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-sm hover:scale-105 transition-smooth">
+                        </a>
+                    `).join('');
+                }
+                
+                visitInfoHtml = `
+                    <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><span class="text-[10px] text-slate-400 block">Waktu Visit</span><strong>${relatedVisit.datetime || '-'}</strong></div>
+                            <div><span class="text-[10px] text-slate-400 block">Status Hasil</span><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold">${relatedVisit.statusHasil || 'Paid'}</span></div>
+                        </div>
+                        <div><span class="text-[10px] text-slate-400 block">Remark / Catatan Lapangan</span><p class="text-slate-700 mt-0.5">${relatedVisit.remark || '-'}</p></div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('paid-detail-content').innerHTML = `
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div><span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Status Pembayaran</span><span class="inline-block mt-0.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700">Paid (Lunas)</span></div>
+                    <div><span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Nomor Invoice</span><strong class="text-indigo-600 text-sm">${c.invoiceNo || '-'}</strong></div>
+                </div>
+
+                <div class="space-y-2 bg-white p-4 rounded-xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1 mb-2">Informasi Customer & Wilayah</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><span class="text-[10px] text-slate-400 block">Nama Customer</span><strong class="text-slate-800 text-sm">${c.customer}</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">City Homepass</span><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-semibold">${c.cityHome || '-'}</span></div>
+                        <div><span class="text-[10px] text-slate-400 block">Region</span><strong>${c.region || '-'}</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">Billing Cycle</span><strong>${c.billingCyc || '-'}</strong></div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 bg-white p-4 rounded-xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1 mb-2">Informasi Tim Sales & Supervisor</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><span class="text-[10px] text-slate-400 block">Nama Sales</span><strong class="text-slate-800">${c.salesName || '-'}</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">Kode Sales</span><strong>${c.salesCode || '-'}</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">Nama Supervisor (SPV)</span><strong class="text-slate-800">${c.spvName || '-'}</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">SPV Zone</span><strong>${c.spvZone || '-'}</strong></div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 bg-white p-4 rounded-xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1 mb-2">Catatan Riwayat Kunjungan (Visit)</h4>
+                    ${visitInfoHtml}
+                </div>
+
+                <div class="space-y-2 bg-white p-4 rounded-xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1 mb-2">Lampiran Foto Bukti Kunjungan</h4>
+                    <div class="flex flex-wrap gap-3 mt-2">${photosHtml}</div>
+                </div>
+            `;
+            
+            document.getElementById('paid-detail-modal').classList.remove('hidden');
+        }
+
+        function closePaidDetailModal() {
+            document.getElementById('paid-detail-modal').classList.add('hidden');
+        }
+
+        function exportPaidCSV() {
+            if(currentUserRole !== 'admin') { alert('Akses ditolak!'); return; }
+            const paidList = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'paid');
+            if (paidList.length === 0) { alert('Tidak ada data paid.'); return; }
+            const worksheet = XLSX.utils.json_to_sheet(paidList);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Paid");
+            XLSX.writeFile(workbook, "customer_paid.xlsx");
         }
 
         function renderUnpaidTable() {
@@ -896,8 +1116,9 @@
             saveDataLocally(cust);
             closeEditCustomerModal();
             renderMasterTable();
+            renderPaidTable();
             renderUnpaidTable();
-            alert('Data berhasil diperbarui!');
+            alert('Data berhasil diperbarui & disinkronkan ke Cloud!');
         }
 
         function deleteCustomer(custId) {
@@ -910,6 +1131,7 @@
                 saveDataLocally();
                 deleteFromGoogleSheetOnline(cust.invoiceNo);
                 renderMasterTable();
+                renderPaidTable();
                 renderUnpaidTable();
                 updateDashboard();
             }
@@ -981,6 +1203,7 @@
 
             closeVisitModal();
             renderVisitTable();
+            renderPaidTable();
             renderUnpaidTable();
             if(currentUserRole === 'admin') renderMasterTable();
             switchTab('visit');
@@ -1046,19 +1269,8 @@
             }
         }
 
-        // Fungsi Download / Export Excel khusus Admin (Unpaid & Master)
-        function exportUnpaidCSV() {
-            if(currentUserRole !== 'admin') { alert('Akses ditolak! Fitur download excel hanya untuk admin.'); return; }
-            const unpaidList = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'unpaid');
-            if (unpaidList.length === 0) { alert('Tidak ada data unpaid.'); return; }
-            const worksheet = XLSX.utils.json_to_sheet(unpaidList);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Unpaid");
-            XLSX.writeFile(workbook, "customer_unpaid.xlsx");
-        }
-
         function exportMasterCSV() {
-            if(currentUserRole !== 'admin') { alert('Akses ditolak! Fitur download excel hanya untuk admin.'); return; }
+            if(currentUserRole !== 'admin') { alert('Akses ditolak!'); return; }
             if (customers.length === 0) { alert('Tidak ada data master.'); return; }
             const worksheet = XLSX.utils.json_to_sheet(customers);
             const workbook = XLSX.utils.book_new();
