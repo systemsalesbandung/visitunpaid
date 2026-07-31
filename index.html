@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Penagihan & Kunjungan Customer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (xlsx) for Excel Upload & Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; text-transform: capitalize; }
+        /* custom soft & smooth animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .transition-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-600">
+
+    <!-- Top Navigation Menu (Menu di Atas) -->
+    <header class="bg-slate-900 text-slate-300 shadow-lg z-20 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <!-- App Logo / Title -->
+            <div class="flex items-center gap-3 text-white font-bold text-base tracking-wider">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 animate-float">
+                    <i class="fa-solid fa-chart-line text-sm"></i>
+                </div>
+                <span class="bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">Collect & Visit Tracker</span>
+            </div>
+
+            <!-- Navigation Links (Horizontal Top) -->
+            <nav class="hidden md:flex items-center space-x-1">
+                <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-emerald-600 text-white shadow-md shadow-emerald-900/40 transition-smooth">
+                    <i class="fa-solid fa-house-chimney"></i> Dashboard
+                </a>
+                <a href="#" onclick="switchTab('unpaid')" id="nav-unpaid" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Customer Unpaid
+                    <span id="badge-unpaid" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                </a>
+                <a href="#" onclick="switchTab('visit')" id="nav-visit" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                    <i class="fa-solid fa-location-crosshairs text-blue-400"></i> Proses Visit & Log
+                </a>
+                <a href="#" onclick="switchTab('customers')" id="nav-customers" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                    <i class="fa-solid fa-users text-purple-400"></i> Master Data
+                </a>
+                <a href="#" onclick="switchTab('upload')" id="nav-upload" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium hover:bg-slate-800 hover:text-white transition-smooth">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i> Upload & Sync
+                </a>
+            </nav>
+
+            <!-- Top Right Info & Profile -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 bg-slate-800/80 border border-slate-700/50 px-3 py-1.5 rounded-full text-xs font-medium text-slate-300">
+                    <i class="fa-regular fa-clock text-emerald-400"></i>
+                    <span id="current-time"></span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
+                    Ad
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Navigation Sub-bar -->
+        <div class="md:hidden flex overflow-x-auto p-2 bg-slate-950 space-x-1 border-t border-slate-800">
+            <a href="#" onclick="switchTab('dashboard')" id="nav-m-dashboard" class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white whitespace-nowrap">Dashboard</a>
+            <a href="#" onclick="switchTab('unpaid')" id="nav-m-unpaid" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Unpaid</a>
+            <a href="#" onclick="switchTab('visit')" id="nav-m-visit" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Visit Log</a>
+            <a href="#" onclick="switchTab('customers')" id="nav-m-customers" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Master</a>
+            <a href="#" onclick="switchTab('upload')" id="nav-m-upload" class="px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap">Sync</a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+        <!-- Scrollable Main Content -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Metrics Cards with Animated Ornaments -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-smooth relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-125 transition-smooth opacity-50"></div>
+                        <div class="flex items-center justify-between relative z-10">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Customer</p>
+                                <h3 id="stat-total" class="text-2xl font-extrabold text-slate-800 mt-1">0</h3>
+                            </div>
+                            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shadow-inner">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-smooth relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-125 transition-smooth opacity-50"></div>
+                        <div class="flex items-center justify-between relative z-10">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status Paid</p>
+                                <h3 id="stat-paid" class="text-2xl font-extrabold text-emerald-600 mt-1">0</h3>
+                            </div>
+                            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shadow-inner">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-smooth relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-50 rounded-full group-hover:scale-125 transition-smooth opacity-50"></div>
+                        <div class="flex items-center justify-between relative z-10">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status Unpaid</p>
+                                <h3 id="stat-unpaid" class="text-2xl font-extrabold text-amber-600 mt-1">0</h3>
+                            </div>
+                            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shadow-inner animate-pulse">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-smooth relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-purple-50 rounded-full group-hover:scale-125 transition-smooth opacity-50"></div>
+                        <div class="flex items-center justify-between relative z-10">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Visit Selesai</p>
+                                <h3 id="stat-visits" class="text-2xl font-extrabold text-purple-600 mt-1">0</h3>
+                            </div>
+                            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg shadow-inner">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow transition-smooth">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-indigo-500"></i> Komposisi Pembayaran (Paid vs Unpaid)
+                            </h3>
+                            <div class="flex items-center gap-2 text-xs">
+                                <label class="text-slate-500 font-medium">Orientasi:</label>
+                                <select id="payment-chart-orientation" onchange="updatePaymentChartOrientation()" class="px-2.5 py-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                    <option value="vertical">Vertikal</option>
+                                    <option value="horizontal">Menyamping (Horizontal)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="h-60 flex justify-center items-center">
+                            <canvas id="chartPayment"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow transition-smooth">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-teal-500"></i> Distribusi Unpaid Berdasarkan City Homepass
+                            </h3>
+                            <div class="flex items-center gap-2 text-xs">
+                                <label class="text-slate-500 font-medium">Orientasi:</label>
+                                <select id="city-chart-orientation" onchange="updateCityChartOrientation()" class="px-2.5 py-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                    <option value="vertical">Vertikal</option>
+                                    <option value="horizontal" selected>Menyamping (Horizontal)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="h-60 flex justify-center items-center">
+                            <canvas id="chartCityHome"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Unpaid Customer Table on Dashboard -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-500 animate-bounce"></i> Daftar Customer Unpaid (Prioritas Kunjungan)
+                        </h3>
+                        <button onclick="switchTab('unpaid')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-smooth">
+                            Lihat Semua &rarr;
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100/70 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-5 py-3">Customer Name</th>
+                                    <th class="px-5 py-3">Invoice No</th>
+                                    <th class="px-5 py-3">City Homepass</th>
+                                    <th class="px-5 py-3">Sales Name</th>
+                                    <th class="px-5 py-3">SPV Name</th>
+                                    <th class="px-5 py-3">Status</th>
+                                    <th class="px-5 py-3 text-center">Aksi Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-unpaid-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CUSTOMER UNPAID -->
+            <div id="tab-unpaid" class="tab-content space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Daftar Customer Belum Melakukan Pembayaran (Unpaid)</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Daftar customer yang memerlukan tindak lanjut penagihan lapangan.</p>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <input type="text" id="search-unpaid" placeholder="Cari customer / invoice..." onkeyup="renderUnpaidTable()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full md:w-64 bg-slate-50/50">
+                        <button onclick="exportUnpaidCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium shadow-sm transition-smooth flex items-center gap-2 whitespace-nowrap">
+                            <i class="fa-solid fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100/70 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-5 py-3">Customer</th>
+                                    <th class="px-5 py-3">Invoice No</th>
+                                    <th class="px-5 py-3">City Homepass</th>
+                                    <th class="px-5 py-3">Sales Name</th>
+                                    <th class="px-5 py-3">SPV Name</th>
+                                    <th class="px-5 py-3">Payment Status</th>
+                                    <th class="px-5 py-3 text-center">Proses Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unpaid-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: PROCESS VISIT & LOG -->
+            <div id="tab-visit" class="tab-content space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Manajemen Hasil Kunjungan & Log (Visit)</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Catat hasil investigasi lapangan, foto bukti kunjungan, dan status penagihan.</p>
+                        </div>
+                        <button onclick="openVisitModalManual()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-smooth flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Input Visit Manual
+                        </button>
+                    </div>
+                    <!-- Visit Log Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100/70 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-5 py-3">Waktu Visit</th>
+                                    <th class="px-5 py-3">Customer</th>
+                                    <th class="px-5 py-3">City Homepass</th>
+                                    <th class="px-5 py-3">Sales & SPV</th>
+                                    <th class="px-5 py-3">Foto Visit</th>
+                                    <th class="px-5 py-3">Hasil / Status</th>
+                                    <th class="px-5 py-3 text-center">Aksi Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="visit-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CUSTOMER MASTER DATA -->
+            <div id="tab-customers" class="tab-content space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Seluruh Master Data Customer (Google Sheets Connected)</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Daftar lengkap seluruh data customer dari Google Spreadsheet.</p>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <input type="text" id="search-master" placeholder="Cari customer / city / sales..." onkeyup="handleMasterSearch()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full md:w-64 bg-slate-50/50">
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600 whitespace-nowrap">
+                            <thead class="bg-slate-100/70 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3">Customer</th>
+                                    <th class="px-4 py-3">SA Month</th>
+                                    <th class="px-4 py-3">City Homepass</th>
+                                    <th class="px-4 py-3">City Sales</th>
+                                    <th class="px-4 py-3">Sales Code</th>
+                                    <th class="px-4 py-3">Sales Name</th>
+                                    <th class="px-4 py-3">Micro Bloc</th>
+                                    <th class="px-4 py-3">SPV Zone</th>
+                                    <th class="px-4 py-3">SPV Name</th>
+                                    <th class="px-4 py-3">Region</th>
+                                    <th class="px-4 py-3">Acq Chan</th>
+                                    <th class="px-4 py-3">Billing Cyc</th>
+                                    <th class="px-4 py-3">Invoice No</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="master-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div class="p-4 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between">
+                        <span id="pagination-info" class="text-xs text-slate-400 font-medium">Menampilkan 0 dari 0 data</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="prevMasterPage()" id="btn-prev" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-smooth">Prev</button>
+                            <span id="page-indicator" class="text-xs font-bold text-slate-700 px-2">1 / 1</span>
+                            <button onclick="nextMasterPage()" id="btn-next" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-smooth">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: UPLOAD & GOOGLE SHEETS SYNC -->
+            <div id="tab-upload" class="tab-content space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm max-w-2xl mx-auto space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 mb-1">Sinkronisasi Database Google Sheets[cite: 1]</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Aplikasi terhubung langsung dengan Google Spreadsheet Anda. Klik tombol di bawah untuk memperbarui data terbaru dari spreadsheet.</p>
+                        <div class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 flex items-center justify-between">
+                            <span class="truncate">🔗 https://docs.google.com/spreadsheets/d/1HPhCRXUmzit77DDxtFeGPGnLOt_WrTlDvCWw0sfduEo/edit</span>
+                            <button onclick="fetchGoogleSheetData()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm whitespace-nowrap ml-2">
+                                <i class="fa-solid fa-rotate mr-1"></i> Sync Sekarang
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-4">
+                        <h3 class="text-sm font-bold text-slate-800 mb-1">Atau Upload Dokumen Excel (.xlsx / .xls) Manual</h3>
+                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-slate-50 transition-smooth cursor-pointer group mt-3" onclick="document.getElementById('excel-file').click()">
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-smooth shadow-inner">
+                                <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                            </div>
+                            <p class="text-xs font-semibold text-slate-700">Klik Untuk Memilih File Excel (.xlsx)</p>
+                            <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <button onclick="clearAllData()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-semibold transition-smooth">
+                            <i class="fa-solid fa-trash mr-1.5"></i> Reset Data Lokal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL PROCESS VISIT (MANUAL / FROM UNPAID) -->
+    <div id="visit-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-emerald-600"></i> Form Kunjungan & Penagihan (Visit)
+                </h3>
+                <button onclick="closeVisitModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <form id="form-visit" onsubmit="submitVisit(event)" class="space-y-3.5">
+                <input type="hidden" id="visit-customer-id">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pilih / Nama Customer</label>
+                    <select id="modal-cust-select" onchange="onSelectCustomerModal(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                        <option value="">-- Pilih Customer --</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">No Invoice</label>
+                        <input type="text" id="modal-invoice" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">City Homepass</label>
+                        <input type="text" id="modal-cityhome" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nama Sales</label>
+                        <input type="text" id="modal-salesname" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Supervisor (SPV Name)</label>
+                        <input type="text" id="modal-spvname" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tanggal & Jam Visit</label>
+                        <input type="text" id="modal-datetime" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pilih Status Kunjungan (Unpaid / Paid)</label>
+                        <select id="modal-status-hasil" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                            <option value="">-- Pilih Status --</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Remark / Keterangan Kunjungan</label>
+                    <textarea id="modal-remark" rows="2.5" required placeholder="Tuliskan catatan detail hasil visit..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Lampiran Foto Visit</label>
+                    <input type="file" id="modal-photos" accept="image/*" multiple class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeVisitModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm">Simpan Kunjungan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT MASTER CUSTOMER -->
+    <div id="edit-customer-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-purple-600"></i> Edit Master Data Customer
+                </h3>
+                <button onclick="closeEditCustomerModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <form id="form-edit-customer" onsubmit="submitEditCustomer(event)" class="space-y-3.5">
+                <input type="hidden" id="edit-cust-id">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nama Customer</label>
+                        <input type="text" id="edit-cust-name" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">No Invoice</label>
+                        <input type="text" id="edit-cust-invoice" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">City Homepass</label>
+                        <input type="text" id="edit-cust-cityhome" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Sales Name</label>
+                        <input type="text" id="edit-cust-sales" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">SPV Name</label>
+                        <input type="text" id="edit-cust-spv" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Payment Status</label>
+                        <select id="edit-cust-status" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeEditCustomerModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL VISIT DETAIL -->
+    <div id="visit-detail-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-600"></i> Detail Hasil Kunjungan
+                </h3>
+                <button onclick="closeVisitDetailModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <div id="visit-detail-content" class="space-y-3 text-xs text-slate-600">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeVisitDetailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Google Sheets CSV Link Config
+        const SHEET_ID = '1HPhCRXUmzit77DDxtFeGPGnLOt_WrTlDvCWw0sfduEo';
+        const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+        const defaultData = [
+            { id: 1, customer: "PT Maju Bersama", saMonth: "2026-01", cityHome: "Jakarta", citySales: "Jakarta", salesCode: "S001", salesName: "Budi Santoso", microBloc: "MB-01", spvZone: "Zona A", spvName: "Ahmad", invoiceNo: "INV/2026/001", paymentStatus: "Unpaid" }
+        ];
+
+        let customers = JSON.parse(localStorage.getItem('col_customers')) || [];
+        let visits = JSON.parse(localStorage.getItem('col_visits')) || [];
+
+        let chartPaymentInstance = null;
+        let chartCityHomeInstance = null;
+
+        let currentMasterPage = 1;
+        const rowsPerPage = 20;
+
+        function formatText(val) {
+            if (!val) return '';
+            return String(val).toLowerCase().replace(/\b\w/g, l => l.toUpperCase()).trim();
+        }
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
+        }, 1000);
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('nav a').forEach(el => {
+                if(!el.id.startsWith('nav-m-')) {
+                    el.classList.remove('bg-emerald-600', 'text-white', 'shadow-md', 'shadow-emerald-900/40');
+                    el.classList.add('hover:bg-slate-800', 'hover:text-white');
+                }
+            });
+
+            const activeNav = document.getElementById('nav-' + tabId);
+            if (activeNav) {
+                activeNav.classList.add('bg-emerald-600', 'text-white', 'shadow-md', 'shadow-emerald-900/40');
+                activeNav.classList.remove('hover:bg-slate-800', 'hover:text-white');
+            }
+
+            ['dashboard', 'unpaid', 'visit', 'customers', 'upload'].forEach(id => {
+                const mEl = document.getElementById('nav-m-' + id);
+                if(mEl) {
+                    if(id === tabId) {
+                        mEl.className = 'px-3 py-1.5 rounded-lg text-xs bg-emerald-600 text-white whitespace-nowrap';
+                    } else {
+                        mEl.className = 'px-3 py-1.5 rounded-lg text-xs text-slate-300 whitespace-nowrap';
+                    }
+                }
+            });
+
+            if (tabId === 'dashboard') updateDashboard();
+            else if (tabId === 'unpaid') renderUnpaidTable();
+            else if (tabId === 'visit') renderVisitTable();
+            else if (tabId === 'customers') renderMasterTable();
+        }
+
+        // Fetch data automatically from Google Sheets on load
+        async function initApp() {
+            if (customers.length === 0) {
+                await fetchGoogleSheetData();
+            } else {
+                updateDashboard();
+                renderUnpaidTable();
+                renderVisitTable();
+                renderMasterTable();
+            }
+        }
+
+        async function fetchGoogleSheetData() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                if (!response.ok) throw new Error('Gagal mengambil data dari Google Sheets.');
+                const csvText = await response.text();
+                
+                const workbook = XLSX.read(csvText, { type: 'string' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                if (json.length === 0) {
+                    alert('Google Sheet kosong.');
+                    return;
+                }
+
+                customers = json.map((row, index) => ({
+                    id: Date.now() + index,
+                    customer: formatText(row['Customer'] || row['Customer ID'] || row['customer'] || 'Customer ' + (index + 1)),
+                    saMonth: formatText(row['SA Month'] || '2026-01'),
+                    cityHome: formatText(row['City Homepass'] || row['City Home'] || '-'),
+                    citySales: formatText(row['City Sales'] || '-'),
+                    salesCode: formatText(row['Sales Code'] || '-'),
+                    salesName: formatText(row['Sales Name'] || '-'),
+                    microBloc: formatText(row['Micro Block ID'] || row['Micro Bloc'] || '-'),
+                    spvZone: formatText(row['SPV Zone'] || '-'),
+                    spvName: formatText(row['SPV Name'] || '-'),
+                    region: formatText(row['Region'] || 'General'),
+                    acqChan: formatText(row['Acq Channel'] || row['Acq Chan'] || '-'),
+                    billingCyc: formatText(row['Billing Cycle'] || row['Billing Cyc'] || 'Monthly'),
+                    invoiceNo: formatText(row['Invoice Number'] || row['Invoice No'] || ('INV/' + (2026000 + index))),
+                    paymentStatus: formatText(row['Payment Status'] || 'Unpaid')
+                }));
+
+                saveData();
+                alert(`Berhasil sinkronisasi ${customers.length} data dari Google Sheets![cite: 1]`);
+                switchTab('dashboard');
+            } catch (err) {
+                console.error(err);
+                if (customers.length === 0) customers = defaultData;
+                updateDashboard();
+                renderUnpaidTable();
+                renderVisitTable();
+                renderMasterTable();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('col_customers', JSON.stringify(customers));
+            localStorage.setItem('col_visits', JSON.stringify(visits));
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const total = customers.length;
+            const paid = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'paid').length;
+            const unpaid = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'unpaid').length;
+            const totalVisits = visits.length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-paid').innerText = paid;
+            document.getElementById('stat-unpaid').innerText = unpaid;
+            document.getElementById('stat-visits').innerText = totalVisits;
+            document.getElementById('badge-unpaid').innerText = unpaid;
+
+            const tbody = document.getElementById('dashboard-unpaid-tbody');
+            const unpaidList = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'unpaid').slice(0, 5);
+            
+            if (unpaidList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-4 text-center text-slate-400">Tidak ada customer unpaid.</td></tr>`;
+            } else {
+                tbody.innerHTML = unpaidList.map(c => `
+                    <tr class="hover:bg-slate-50 transition-smooth">
+                        <td class="px-5 py-3 font-semibold text-slate-800">${c.customer}</td>
+                        <td class="px-5 py-3 text-slate-500">${c.invoiceNo || '-'}</td>
+                        <td class="px-5 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold">${c.cityHome || '-'}</span></td>
+                        <td class="px-5 py-3 text-slate-500">${c.salesName || '-'}</td>
+                        <td class="px-5 py-3 text-slate-500">${c.spvName || '-'}</td>
+                        <td class="px-5 py-3"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[11px] font-bold">Unpaid</span></td>
+                        <td class="px-5 py-3 text-center">
+                            <button onclick="openVisitModal(${c.id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-semibold shadow-sm transition-smooth flex items-center gap-1.5 mx-auto">
+                                <i class="fa-solid fa-location-crosshairs"></i> Proses Visit
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderCharts(paid, unpaid);
+        }
+
+        function renderCharts(paid, unpaid) {
+            const payOrientation = document.getElementById('payment-chart-orientation').value;
+            const ctxPayment = document.getElementById('chartPayment').getContext('2d');
+            if (chartPaymentInstance) chartPaymentInstance.destroy();
+            
+            chartPaymentInstance = new Chart(ctxPayment, {
+                type: 'bar',
+                data: {
+                    labels: ['Paid', 'Unpaid'],
+                    datasets: [{
+                        label: 'Jumlah Customer',
+                        data: [paid, unpaid],
+                        backgroundColor: ['#059669', '#d97706'], 
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: payOrientation === 'horizontal' ? 'y' : 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } } },
+                        x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const cityOrientation = document.getElementById('city-chart-orientation').value;
+            const cityCounts = {};
+            customers.filter(c => String(c.paymentStatus).toLowerCase() === 'unpaid').forEach(c => {
+                const city = c.cityHome || 'Unknown';
+                cityCounts[city] = (cityCounts[city] || 0) + 1;
+            });
+
+            const ctxCityHome = document.getElementById('chartCityHome').getContext('2d');
+            if (chartCityHomeInstance) chartCityHomeInstance.destroy();
+            chartCityHomeInstance = new Chart(ctxCityHome, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(cityCounts),
+                    datasets: [{
+                        label: 'Jumlah Unpaid',
+                        data: Object.values(cityCounts),
+                        backgroundColor: '#4f46e5', 
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: cityOrientation === 'horizontal' ? 'y' : 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } } },
+                        x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updatePaymentChartOrientation() { updateDashboard(); }
+        function updateCityChartOrientation() { updateDashboard(); }
+
+        function renderUnpaidTable() {
+            const query = (document.getElementById('search-unpaid')?.value || '').toLowerCase();
+            const tbody = document.getElementById('unpaid-tbody');
+            const unpaidList = customers.filter(c => {
+                const isUnpaid = String(c.paymentStatus).toLowerCase() === 'unpaid';
+                const matchQuery = String(c.customer).toLowerCase().includes(query) || String(c.invoiceNo).toLowerCase().includes(query) || String(c.cityHome).toLowerCase().includes(query);
+                return isUnpaid && matchQuery;
+            });
+
+            if (unpaidList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">Tidak ditemukan customer unpaid.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = unpaidList.map(c => `
+                <tr class="hover:bg-slate-50 transition-smooth">
+                    <td class="px-5 py-3 font-semibold text-slate-800">${c.customer}</td>
+                    <td class="px-5 py-3 text-slate-500">${c.invoiceNo || '-'}</td>
+                    <td class="px-5 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold">${c.cityHome || '-'}</span></td>
+                    <td class="px-5 py-3 text-slate-500">${c.salesName || '-'}</td>
+                    <td class="px-5 py-3 text-slate-500">${c.spvName || '-'}</td>
+                    <td class="px-5 py-3"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[11px] font-bold">Unpaid</span></td>
+                    <td class="px-5 py-3 text-center">
+                        <button onclick="openVisitModal(${c.id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-semibold shadow-sm transition-smooth flex items-center gap-1.5 mx-auto">
+                            <i class="fa-solid fa-location-crosshairs"></i> Proses Visit
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function handleMasterSearch() {
+            currentMasterPage = 1;
+            renderMasterTable();
+        }
+
+        function renderMasterTable() {
+            const query = (document.getElementById('search-master')?.value || '').toLowerCase();
+            const filtered = customers.filter(c => 
+                String(c.customer).toLowerCase().includes(query) || 
+                String(c.invoiceNo).toLowerCase().includes(query) ||
+                String(c.cityHome).toLowerCase().includes(query) ||
+                String(c.salesName).toLowerCase().includes(query)
+            );
+
+            const totalRows = filtered.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+            if (currentMasterPage > totalPages) currentMasterPage = totalPages;
+            if (currentMasterPage < 1) currentMasterPage = 1;
+
+            const startIdx = (currentMasterPage - 1) * rowsPerPage;
+            const endIdx = startIdx + rowsPerPage;
+            const pageData = filtered.slice(startIdx, endIdx);
+
+            const tbody = document.getElementById('master-tbody');
+            if (pageData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" class="px-4 py-8 text-center text-slate-400">Belum ada data customer.</td></tr>`;
+            } else {
+                tbody.innerHTML = pageData.map(c => `
+                    <tr class="hover:bg-slate-50 transition-smooth">
+                        <td class="px-4 py-2.5 font-semibold text-slate-800">${c.customer || ''}</td>
+                        <td class="px-4 py-2.5">${c.saMonth || ''}</td>
+                        <td class="px-4 py-2.5"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold">${c.cityHome || ''}</span></td>
+                        <td class="px-4 py-2.5">${c.citySales || ''}</td>
+                        <td class="px-4 py-2.5">${c.salesCode || ''}</td>
+                        <td class="px-4 py-2.5">${c.salesName || ''}</td>
+                        <td class="px-4 py-2.5">${c.microBloc || ''}</td>
+                        <td class="px-4 py-2.5">${c.spvZone || ''}</td>
+                        <td class="px-4 py-2.5">${c.spvName || ''}</td>
+                        <td class="px-4 py-2.5">${c.region || ''}</td>
+                        <td class="px-4 py-2.5">${c.acqChan || ''}</td>
+                        <td class="px-4 py-2.5">${c.billingCyc || ''}</td>
+                        <td class="px-4 py-2.5 font-medium text-indigo-600">${c.invoiceNo || ''}</td>
+                        <td class="px-4 py-2.5">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${String(c.paymentStatus).toLowerCase() === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                                ${c.paymentStatus || 'Unpaid'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2.5 text-center">
+                            <button onclick="openEditCustomerModal(${c.id})" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[11px] font-semibold transition-smooth">
+                                <i class="fa-solid fa-pen mr-1"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('pagination-info').innerText = `Menampilkan ${totalRows > 0 ? startIdx + 1 : 0} - ${Math.min(endIdx, totalRows)} dari ${totalRows} data`;
+            document.getElementById('page-indicator').innerText = `${currentMasterPage} / ${totalPages}`;
+            document.getElementById('btn-prev').disabled = currentMasterPage === 1;
+            document.getElementById('btn-next').disabled = currentMasterPage === totalPages || totalRows === 0;
+        }
+
+        function prevMasterPage() { if (currentMasterPage > 1) { currentMasterPage--; renderMasterTable(); } }
+        function nextMasterPage() {
+            const query = (document.getElementById('search-master')?.value || '').toLowerCase();
+            const filtered = customers.filter(c => String(c.customer).toLowerCase().includes(query) || String(c.invoiceNo).toLowerCase().includes(query) || String(c.cityHome).toLowerCase().includes(query));
+            const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+            if (currentMasterPage < totalPages) { currentMasterPage++; renderMasterTable(); }
+        }
+
+        function openEditCustomerModal(custId) {
+            const cust = customers.find(c => c.id === custId);
+            if (!cust) return;
+            document.getElementById('edit-cust-id').value = cust.id;
+            document.getElementById('edit-cust-name').value = cust.customer;
+            document.getElementById('edit-cust-invoice').value = cust.invoiceNo || '';
+            document.getElementById('edit-cust-cityhome').value = cust.cityHome || '';
+            document.getElementById('edit-cust-sales').value = cust.salesName || '';
+            document.getElementById('edit-cust-spv').value = cust.spvName || '';
+            document.getElementById('edit-cust-status').value = cust.paymentStatus || 'Unpaid';
+            document.getElementById('edit-customer-modal').classList.remove('hidden');
+        }
+
+        function closeEditCustomerModal() { document.getElementById('edit-customer-modal').classList.add('hidden'); }
+
+        function submitEditCustomer(event) {
+            event.preventDefault();
+            const custId = parseInt(document.getElementById('edit-cust-id').value);
+            const cust = customers.find(c => c.id === custId);
+            if (!cust) return;
+
+            cust.customer = formatText(document.getElementById('edit-cust-name').value);
+            cust.invoiceNo = formatText(document.getElementById('edit-cust-invoice').value);
+            cust.cityHome = formatText(document.getElementById('edit-cust-cityhome').value);
+            cust.salesName = formatText(document.getElementById('edit-cust-sales').value);
+            cust.spvName = formatText(document.getElementById('edit-cust-spv').value);
+            cust.paymentStatus = formatText(document.getElementById('edit-cust-status').value);
+
+            saveData();
+            closeEditCustomerModal();
+            renderMasterTable();
+            renderUnpaidTable();
+            alert('Data customer berhasil diperbarui!');
+        }
+
+        function openVisitModal(custId) { setupCustomerSelect(custId); document.getElementById('visit-modal').classList.remove('hidden'); }
+        function openVisitModalManual() { setupCustomerSelect(null); document.getElementById('visit-modal').classList.remove('hidden'); }
+
+        function setupCustomerSelect(selectedId) {
+            const select = document.getElementById('modal-cust-select');
+            select.innerHTML = `<option value="">-- Pilih Customer --</option>` + customers.map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.customer} (${c.invoiceNo || 'Tanpa Invoice'})</option>`).join('');
+
+            if (selectedId) onSelectCustomerModal(selectedId);
+            else {
+                document.getElementById('visit-customer-id').value = '';
+                document.getElementById('modal-invoice').value = '';
+                document.getElementById('modal-cityhome').value = '';
+                document.getElementById('modal-salesname').value = '';
+                document.getElementById('modal-spvname').value = '';
+                setDateTimeNow();
+                document.getElementById('modal-status-hasil').value = '';
+                document.getElementById('modal-remark').value = '';
+                document.getElementById('modal-photos').value = '';
+            }
+        }
+
+        function onSelectCustomerModal(val) {
+            if (!val) {
+                document.getElementById('visit-customer-id').value = '';
+                document.getElementById('modal-invoice').value = '';
+                document.getElementById('modal-cityhome').value = '';
+                document.getElementById('modal-salesname').value = '';
+                document.getElementById('modal-spvname').value = '';
+                return;
+            }
+            const cust = customers.find(c => c.id === parseInt(val));
+            if (!cust) return;
+
+            document.getElementById('visit-customer-id').value = cust.id;
+            document.getElementById('modal-invoice').value = cust.invoiceNo || '-';
+            document.getElementById('modal-cityhome').value = cust.cityHome || '-';
+            document.getElementById('modal-salesname').value = cust.salesName || '-';
+            document.getElementById('modal-spvname').value = cust.spvName || '-';
+            document.getElementById('modal-status-hasil').value = cust.paymentStatus || 'Unpaid';
+            setDateTimeNow();
+        }
+
+        function setDateTimeNow() {
+            const now = new Date();
+            document.getElementById('modal-datetime').value = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
+        }
+
+        function closeVisitModal() { document.getElementById('visit-modal').classList.add('hidden'); }
+
+        function submitVisit(event) {
+            event.preventDefault();
+            const custIdField = document.getElementById('visit-customer-id').value;
+            const custId = custIdField ? parseInt(custIdField) : null;
+            const cust = customers.find(c => c.id === custId);
+            
+            const remark = formatText(document.getElementById('modal-remark').value);
+            const statusHasil = formatText(document.getElementById('modal-status-hasil').value);
+            const photosInput = document.getElementById('modal-photos');
+            const now = new Date();
+            const datetimeStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
+            let defaultPhoto = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80';
+
+            if (photosInput.files && photosInput.files.length > 0) {
+                let loadedCount = 0;
+                let photoUrls = [];
+                Array.from(photosInput.files).forEach((file) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        photoUrls.push(e.target.result);
+                        loadedCount++;
+                        if (loadedCount === photosInput.files.length) saveVisitRecord(cust, datetimeStr, statusHasil, remark, photoUrls);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                saveVisitRecord(cust, datetimeStr, statusHasil, remark, [defaultPhoto]);
+            }
+        }
+
+        function saveVisitRecord(cust, datetimeStr, statusHasil, remark, photos) {
+            const newVisit = {
+                id: Date.now(),
+                datetime: datetimeStr,
+                customer: cust ? cust.customer : 'Customer Manual',
+                invoice: cust ? cust.invoiceNo : '-',
+                cityHome: cust ? cust.cityHome : '-',
+                salesName: cust ? cust.salesName : '-',
+                spvName: cust ? cust.spvName : '-',
+                statusHasil: statusHasil,
+                remark: remark,
+                photos: photos
+            };
+
+            visits.unshift(newVisit);
+            if (cust) cust.paymentStatus = statusHasil;
+
+            saveData();
+            closeVisitModal();
+            renderVisitTable();
+            renderMasterTable();
+            renderUnpaidTable();
+            switchTab('visit');
+        }
+
+        function renderVisitTable() {
+            const tbody = document.getElementById('visit-tbody');
+            if (visits.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">Belum ada catatan visit.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = visits.map((v) => {
+                const primaryPhoto = (v.photos && v.photos.length > 0) ? v.photos[0] : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80';
+                const statusBadgeClass = String(v.statusHasil).toLowerCase() === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-smooth">
+                        <td class="px-5 py-3 font-medium text-slate-600 text-xs">${v.datetime}</td>
+                        <td class="px-5 py-3 font-semibold text-slate-800">${v.customer}</td>
+                        <td class="px-5 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold">${v.cityHome || '-'}</span></td>
+                        <td class="px-5 py-3 text-slate-500">
+                            <div class="font-medium text-slate-800">${v.salesName || '-'}</div>
+                            <div class="text-[11px] text-slate-400">SPV: ${v.spvName || '-'}</div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <img src="${primaryPhoto}" alt="Foto visit" class="w-10 h-10 object-cover rounded-xl shadow-sm cursor-pointer" onclick="openVisitDetail(${v.id})">
+                        </td>
+                        <td class="px-5 py-3"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${statusBadgeClass}">${v.statusHasil}</span></td>
+                        <td class="px-5 py-3 text-center">
+                            <button onclick="openVisitDetail(${v.id})" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-semibold shadow-sm transition-smooth flex items-center gap-1 mx-auto">
+                                <i class="fa-solid fa-eye"></i> Detail
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openVisitDetail(visitId) {
+            const v = visits.find(item => item.id === visitId);
+            if (!v) return;
+
+            let photosHtml = `<div class="flex gap-2 overflow-x-auto pb-2 justify-center">` + (v.photos || []).map(p => `<img src="${p}" class="w-24 h-24 object-cover rounded-xl shadow-sm cursor-pointer" onclick="window.open('${p}')">`).join('') + `</div>`;
+            const statusBadgeClass = String(v.statusHasil).toLowerCase() === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+
+            document.getElementById('visit-detail-content').innerHTML = `
+                ${photosHtml}
+                <div class="grid grid-cols-2 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <div><span class="text-[10px] text-slate-400 block uppercase">Waktu Visit</span><strong class="text-slate-800">${v.datetime}</strong></div>
+                    <div><span class="text-[10px] text-slate-400 block uppercase">Customer</span><strong class="text-slate-800">${v.customer}</strong></div>
+                    <div><span class="text-[10px] text-slate-400 block uppercase">Invoice</span><strong class="text-slate-800">${v.invoice}</strong></div>
+                    <div><span class="text-[10px] text-slate-400 block uppercase">City Homepass</span><strong class="text-slate-800">${v.cityHome}</strong></div>
+                </div>
+                <div><span class="text-[10px] text-slate-400 block uppercase mb-1">Status</span><span class="px-2.5 py-1 ${statusBadgeClass} rounded-full text-[11px] font-bold inline-block">${v.statusHasil}</span></div>
+                <div><span class="text-[10px] text-slate-400 block uppercase mb-1">Remark</span><div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">${v.remark}</div></div>
+            `;
+            document.getElementById('visit-detail-modal').classList.remove('hidden');
+        }
+
+        function closeVisitDetailModal() { document.getElementById('visit-detail-modal').classList.add('hidden'); }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    customers = json.map((row, index) => ({
+                        id: Date.now() + index,
+                        customer: formatText(row['Customer'] || 'Customer ' + (index + 1)),
+                        saMonth: formatText(row['SA Month'] || '2026-01'),
+                        cityHome: formatText(row['City Homepass'] || '-'),
+                        salesName: formatText(row['Sales Name'] || '-'),
+                        spvName: formatText(row['SPV Name'] || '-'),
+                        invoiceNo: formatText(row['Invoice No'] || ('INV/' + (2026000 + index))),
+                        paymentStatus: formatText(row['Payment Status'] || 'Unpaid')
+                    }));
+
+                    saveData();
+                    alert('Berhasil mengimpor data!');
+                    switchTab('dashboard');
+                } catch (err) { alert('Gagal membaca file.'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function clearAllData() {
+            if (confirm('Reset semua data lokal?')) {
+                customers = []; visits = [];
+                localStorage.clear();
+                alert('Data direset.');
+                fetchGoogleSheetData();
+            }
+        }
+
+        function exportUnpaidCSV() {
+            const unpaidList = customers.filter(c => String(c.paymentStatus).toLowerCase() === 'unpaid');
+            if (unpaidList.length === 0) { alert('Tidak ada data unpaid.'); return; }
+            const worksheet = XLSX.utils.json_to_sheet(unpaidList);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Unpaid");
+            XLSX.writeFile(workbook, "customer_unpaid.xlsx");
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
